@@ -13,11 +13,26 @@ Format::LongNumber - Format long numbers to human readable view.
 	use Format::LongNumber;
 
 	my $seconds = 121;
-	print short_time($seconds); # '2m 1s'
+	print full_time($seconds); # '2m 1s'
 
 	my $bytes = 1025;
 	print long_traffic($bytes); # '1Kb 1 Bytes'
 	print short_traffic($bytes); # '1,00Kb'
+
+	# You may create custom formats by functions:
+	# short_value(%grade_table, $value);
+	# full_value(%grade_table, $value);
+
+	# For example:
+	my %my_time_grade = (
+		3600*24	=> " day",
+		3600	=> " hour",
+		60		=> " min",
+		1		=> " sec"
+	);
+	print full_value(\%my_time_grade, 121); # '2 min 1 sec'
+);
+
 
 =cut
 
@@ -42,15 +57,15 @@ our @EXPORT = (qw|
 my %_TIME_GRADE = (
 	3600*24	=> " d",
 	3600	=> " h",
-	60		=> " m",
-	1		=> " s"
+	60		=> " min",
+	1		=> " sec"
 );
 
 my %_TRAFFIC_GRADE = (
-	1024**4	=> "T",
-	1024**3	=> "G",
-	1024**2	=> "M",
-	1024	=> "K",
+	1024**4	=> "Tb",
+	1024**3	=> "Gb",
+	1024**2	=> "Mb",
+	1024	=> "Kb",
 	1		=> " Bytes"
 );
 
