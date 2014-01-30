@@ -1,6 +1,6 @@
 package Format::LongNumber;
 
-$VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -12,12 +12,12 @@ Format::LongNumber - Format long numbers to human readable view.
 
 	use Format::LongNumber;
 
-	my $seconds = 121;
-	print full_time($seconds); # '2m 1s'
+	my $seconds = 3600*24*3 + 3600*4 + 60*5 + 11;
+	print full_time($seconds); # '3d 4h 5m 11s'
 
-	my $bytes = 1025;
-	print long_traffic($bytes); # '1Kb 1 Bytes'
-	print short_traffic($bytes); # '1,00Kb'
+	my $bytes = 123456789;
+	print full_traffic($bytes); # '117Mb 755Kb 277b'
+	print short_traffic($bytes); # '117.74Mb'
 
 	# You may create custom formats by functions:
 	# short_value(%grade_table, $value);
@@ -25,10 +25,10 @@ Format::LongNumber - Format long numbers to human readable view.
 
 	# For example:
 	my %my_time_grade = (
-		3600*24	=> " day",
-		3600	=> " hour",
-		60		=> " min",
-		1		=> " sec"
+		3600*24	=> " day ",
+		3600	=> " hour ",
+		60		=> " min ",
+		1		=> " sec "
 	);
 	print full_value(\%my_time_grade, 121); # '2 min 1 sec'
 );
@@ -55,56 +55,69 @@ our @EXPORT = (qw|
 |);
 
 my %_TIME_GRADE = (
-	3600*24	=> " d",
-	3600	=> " h",
-	60		=> " min",
-	1		=> " sec"
+	3600*24	=> "d ",
+	3600	=> "h ",
+	60		=> "m ",
+	1		=> "s "
 );
 
 my %_TRAFFIC_GRADE = (
-	1024**4	=> "Tb",
-	1024**3	=> "Gb",
-	1024**2	=> "Mb",
-	1024	=> "Kb",
-	1		=> " Bytes"
+	1024**4	=> "Tb ",
+	1024**3	=> "Gb ",
+	1024**2	=> "Mb ",
+	1024	=> "Kb ",
+	1		=> "b"
 );
 
 my %_NUMBER_GRADE = (
-	1000**3	=> "B",
-	1000**2	=> "M",
-	1000	=> "K",
-	1		=> ""
+	1000**3	=> ".",
+	1000**2	=> ".",
+	#1000	=> ".",
+	#1		=> ""
 );
 
-=item full_value()
+=head1 DESCRIPTION
+
+=over
+
+=item * full_value(\%grade_table, $total)
 
 Abstract function of the final value 
-Params: 
-	grade_table - hash with dimensions, where the key is a value dimension, and the value is the symbol dimension 
-	total - value to bring us to the desired mean
 
+Params: 
+
+	%grade_table - hash with dimensions, where the key is a value dimension, and the value is the symbol dimension 
+	$total - value to bring us to the desired mean
+
+=back
 =cut
 
 sub full_value {
 	my ($grade_table, $total) = @_;
+	
 	$total ||= 0;
+
+	$total = 0 if $total < 0;
+
 	my $result = "";
 	my @grades = sort { $b <=> $a } keys %$grade_table;
 	for my $grade (@grades) {
 		my $value = int($total / $grade);
 		if ($value) {
 			$total = $total % $grade;
-			$result .= $value. $grade_table->{$grade}. " ";
+			$result .= $value. $grade_table->{$grade};#. " ";
 		}
 	}
 
 	unless ($result) {
 		$result = "0". $grade_table->{$grades[$#grades]};
 	} 
-	else {
-		chop $result;
-	}
+	#else {
+	#	chop $result;
+	#}
 
+	$result =~ s/\s+$//;
+	
 	return $result;
 }
 #
@@ -132,15 +145,21 @@ sub full_number {
 	return full_value(\%_NUMBER_GRADE, $number);
 }
 
-=item short_value() 
+=over
+
+=item * short_value(\%grade_table, $total) 
 
 Converts the given value only to the largest grade-value
 
-=cut
+=cut 
 
 sub short_value {
 	my ($grade_table, $total) = @_;
+	
 	$total ||= 0;
+	
+	$total = 0 if $total < 0;
+	
 	my $result = "";
 	my @grades = sort { $b <=> $a } keys %$grade_table;
 	for my $grade (@grades) {
@@ -156,6 +175,8 @@ sub short_value {
 	unless ($result) {
 		$result = "0". $grade_table->{$grades[$#grades]};
 	} 
+	
+	$result =~ s/\s+$//;
 
 	return $result;
 }	
@@ -187,4 +208,8 @@ sub short_number {
 # The End
 #
 1;
+
+=head1 AUTHOR
+
+Mikhail N Bogdanov C<< <mbogdanov at cpan.org> >>
 
